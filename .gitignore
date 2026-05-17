@@ -30,6 +30,7 @@ dist/
 .vite/
 *.log
 .DS_Store
+tsconfig.tsbuildinfo
 
 # IDE
 .vscode/

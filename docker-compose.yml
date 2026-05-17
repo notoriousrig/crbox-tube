@@ -1,0 +1,67 @@
+# crbox-tube docker compose
+#
+# Services:
+#   backend     — FastAPI app, SQLite at ./data/tube.db, RSS poller via APScheduler
+#   frontend    — nginx serving React build + proxying /api -> backend
+#
+# Edge routing on NAS3:
+#   The existing `networking` stack already runs cloudflared + traefik on the
+#   external network `proxy`. Cloudflared tunnels traffic to traefik:8443
+#   (entrypoint `tunnel`) and traefik dispatches by Host(). We attach
+#   `frontend` to `proxy` and declare traefik labels routing
+#   tube.crbox.ca through the `tunnel` entrypoint.
+#
+#   Auth is Cloudflare Access at the edge — the backend verifies the
+#   Cf-Access-Jwt-Assertion JWT directly.
+#
+# Local dev:
+#   cp .env.example .env  &&  docker compose up --build
+#   Frontend on http://localhost:5173 (vite dev) or http://localhost:8080
+#   when running the built image, backend on http://localhost:8000.
+#
+# No ports are published to the host in production.
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: sqlite:////data/tube.db
+      DATA_DIR: /data
+      CF_ACCESS_TEAM_DOMAIN: ${CF_ACCESS_TEAM_DOMAIN}
+      CF_ACCESS_AUD: ${CF_ACCESS_AUD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      POLL_INTERVAL_MINUTES: ${POLL_INTERVAL_MINUTES:-120}
+      POLL_CONCURRENCY: ${POLL_CONCURRENCY:-8}
+      BACKUP_HOUR: ${BACKUP_HOUR:-4}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+      VIDEO_RETENTION_DAYS: ${VIDEO_RETENTION_DAYS:-180}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+    volumes:
+      - ./data:/data
+    networks:
+      - app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - app
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.crbox-tube.rule=Host(`tube.crbox.ca`)"
+      - "traefik.http.routers.crbox-tube.entrypoints=tunnel"
+      - "traefik.http.services.crbox-tube.loadbalancer.server.port=80"
+
+networks:
+  app:
+    driver: bridge
+  proxy:
+    external: true

@@ -1,14 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import type { Video, VideoStateView } from "../types";
+import type { ViewMode } from "../hooks/useViewMode";
 import { VideoCard } from "./VideoCard";
 
 interface Props {
   interestId: number | null;
   state: VideoStateView;
+  mode: ViewMode;
 }
 
-export function VideoGrid({ interestId, state }: Props) {
+const GRID_CLASS: Record<ViewMode, string> = {
+  comfortable: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4",
+  compact: "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3",
+  list: "flex flex-col gap-2 max-w-3xl mx-auto",
+};
+
+export function VideoGrid({ interestId, state, mode }: Props) {
   const qc = useQueryClient();
   const { data: videos = [], isLoading } = useQuery({
     queryKey: ["videos", interestId, state],
@@ -57,11 +65,12 @@ export function VideoGrid({ interestId, state }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+    <div className={GRID_CLASS[mode]}>
       {videos.map((v) => (
         <VideoCard
           key={v.video_id}
           video={v}
+          mode={mode}
           onClickThrough={(vv) => click.mutate(vv)}
           onMarkWatched={(vv, w) => watched.mutate({ v: vv, w })}
           onMarkHidden={(vv, h) => hidden.mutate({ v: vv, h })}

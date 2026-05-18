@@ -14,6 +14,8 @@ import { ImportModal } from "./components/ImportModal";
 import { AddChannelModal } from "./components/AddChannelModal";
 import { CommandPalette } from "./components/CommandPalette";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { ViewModeToggle } from "./components/ViewModeToggle";
+import { useViewMode } from "./hooks/useViewMode";
 
 const VIEW_TABS: { id: VideoStateView; label: string }[] = [
   { id: "unwatched", label: "Unwatched" },
@@ -32,6 +34,7 @@ export default function App() {
 
   const [selectedId, setSelectedId] = useState<number | "all">("all");
   const [state, setState] = useState<VideoStateView>("unwatched");
+  const { mode: viewMode, setMode: setViewMode, cycle: cycleViewMode } = useViewMode();
 
   const [interestModal, setInterestModal] = useState<{ open: boolean; existing: Interest | null }>({
     open: false, existing: null,
@@ -64,6 +67,9 @@ export default function App() {
       } else if (!inField && e.key === "r") {
         e.preventDefault();
         refreshAll.mutate();
+      } else if (!inField && e.key === "v") {
+        e.preventDefault();
+        cycleViewMode();
       }
     };
     window.addEventListener("keydown", h);
@@ -132,6 +138,7 @@ export default function App() {
               >
                 <Upload size={18} />
               </button>
+              <ViewModeToggle mode={viewMode} onChange={setViewMode} />
               <ThemeToggle />
             </div>
           </div>
@@ -161,7 +168,7 @@ export default function App() {
         </header>
 
         <main className="flex-1 overflow-y-auto scrollbar-thin px-5 py-5">
-          <VideoGrid interestId={interestId} state={state} />
+          <VideoGrid interestId={interestId} state={state} mode={viewMode} />
         </main>
       </div>
 

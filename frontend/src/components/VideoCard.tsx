@@ -39,6 +39,21 @@ export function VideoCard({
     );
   }
 
+  if (mode === "text") {
+    return (
+      <TextItem
+        video={video}
+        watched={watched}
+        saved={saved}
+        duration={duration}
+        onClickThrough={onClickThrough}
+        onMarkWatched={onMarkWatched}
+        onMarkHidden={onMarkHidden}
+        onMarkSaved={onMarkSaved}
+      />
+    );
+  }
+
   const isCompact = mode === "compact";
   const titleSize = isCompact ? "text-xs" : "text-sm";
   const metaSize = isCompact ? "text-[11px]" : "text-xs";
@@ -140,6 +155,88 @@ interface ListItemProps {
   onMarkWatched: (v: Video, watched: boolean) => void;
   onMarkHidden: (v: Video, hidden: boolean) => void;
   onMarkSaved: (v: Video, saved: boolean) => void;
+}
+
+function TextItem({
+  video,
+  watched,
+  saved,
+  duration,
+  onClickThrough,
+  onMarkWatched,
+  onMarkHidden,
+  onMarkSaved,
+}: ListItemProps) {
+  return (
+    <div
+      className={`group flex items-center gap-2 py-1.5 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition ${
+        watched ? "opacity-60" : ""
+      }`}
+    >
+      <div className="flex-1 min-w-0">
+        <a
+          href={youtubeWatchUrl(video.video_id)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => onClickThrough(video)}
+          className="block"
+        >
+          <span
+            className="text-sm font-medium truncate hover:underline block"
+            title={video.title}
+          >
+            {video.title}
+          </span>
+        </a>
+        <div className="text-xs text-zinc-500 flex items-center gap-2 truncate">
+          <span className="truncate" title={video.channel_title}>
+            {video.channel_title}
+          </span>
+          <span aria-hidden>•</span>
+          <span className="flex-shrink-0">{relativeTime(video.published_at)}</span>
+          {video.view_count != null && (
+            <>
+              <span aria-hidden>•</span>
+              <span className="flex-shrink-0">{formatViewCount(video.view_count)}</span>
+            </>
+          )}
+          {duration && (
+            <>
+              <span aria-hidden>•</span>
+              <span className="flex-shrink-0 tabular-nums">{duration}</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        <button
+          onClick={() => onMarkWatched(video, !watched)}
+          className={`p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
+            watched ? "text-brand-500" : "text-zinc-400"
+          }`}
+          title={watched ? "Mark unwatched" : "Mark watched"}
+        >
+          <Check size={14} />
+        </button>
+        <button
+          onClick={() => onMarkSaved(video, !saved)}
+          className={`p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
+            saved ? "text-brand-500" : "text-zinc-400"
+          }`}
+          title={saved ? "Unsave" : "Save"}
+        >
+          {saved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+        </button>
+        <button
+          onClick={() => onMarkHidden(video, true)}
+          className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 opacity-0 group-hover:opacity-100 transition"
+          title="Hide"
+        >
+          <EyeOff size={14} />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function ListItem({

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-export type ViewMode = "comfortable" | "compact" | "list";
+export type ViewMode = "comfortable" | "compact" | "list" | "text";
 
 const STORAGE_KEY = "crbox-tube:viewmode";
-const ORDER: ViewMode[] = ["comfortable", "compact", "list"];
+const ORDER: ViewMode[] = ["comfortable", "compact", "list", "text"];
 
 function detectInitial(): ViewMode {
   if (typeof window === "undefined") return "comfortable";
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === "comfortable" || stored === "compact" || stored === "list") return stored;
+  if (ORDER.includes(stored as ViewMode)) return stored as ViewMode;
   return "comfortable";
 }
 

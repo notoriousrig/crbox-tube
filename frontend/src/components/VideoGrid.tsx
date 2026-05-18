@@ -14,6 +14,7 @@ const GRID_CLASS: Record<ViewMode, string> = {
   comfortable: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4",
   compact: "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3",
   list: "flex flex-col gap-2 max-w-3xl mx-auto",
+  text: "flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800 max-w-3xl mx-auto",
 };
 
 export function VideoGrid({ interestId, state, mode }: Props) {

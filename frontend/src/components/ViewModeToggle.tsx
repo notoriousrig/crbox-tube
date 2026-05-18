@@ -1,4 +1,4 @@
-import { Grid3x3, LayoutGrid, List } from "lucide-react";
+import { AlignJustify, Grid3x3, LayoutGrid, List } from "lucide-react";
 import type { ViewMode } from "../hooks/useViewMode";
 
 interface Props {
@@ -10,6 +10,7 @@ const OPTIONS: { id: ViewMode; icon: typeof LayoutGrid; label: string }[] = [
   { id: "comfortable", icon: LayoutGrid, label: "Comfortable" },
   { id: "compact", icon: Grid3x3, label: "Compact" },
   { id: "list", icon: List, label: "List" },
+  { id: "text", icon: AlignJustify, label: "Text only" },
 ];
 
 export function ViewModeToggle({ mode, onChange }: Props) {

@@ -1,4 +1,4 @@
-import { Inbox, Plus, Settings2, Tv } from "lucide-react";
+import { Inbox, Pencil, Plus, Settings2, Tv } from "lucide-react";
 import type { Interest } from "../types";
 
 interface Props {
@@ -7,9 +7,10 @@ interface Props {
   onSelect: (id: number | "all") => void;
   onNewInterest: () => void;
   onManage: (id: number) => void;
+  onEdit: (i: Interest) => void;
 }
 
-export function Sidebar({ interests, selectedId, onSelect, onNewInterest, onManage }: Props) {
+export function Sidebar({ interests, selectedId, onSelect, onNewInterest, onManage, onEdit }: Props) {
   const totalUnwatched = interests.reduce((acc, i) => acc + i.unwatched_count, 0);
 
   return (
@@ -64,10 +65,20 @@ export function Sidebar({ interests, selectedId, onSelect, onNewInterest, onMana
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                onEdit(i);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-300 dark:hover:bg-zinc-700"
+              title="Rename / edit"
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
                 onManage(i.id);
               }}
               className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-300 dark:hover:bg-zinc-700"
-              title="Manage interest"
+              title="Manage channels & filters"
             >
               <Settings2 size={14} />
             </button>

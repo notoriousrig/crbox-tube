@@ -129,6 +129,7 @@ export default function App() {
         onSelect={setSelectedId}
         onNewInterest={() => setInterestModal({ open: true, existing: null })}
         onManage={(id) => setManageId(id)}
+        onEdit={(i) => setInterestModal({ open: true, existing: i })}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -252,6 +253,7 @@ export default function App() {
           open
           interestId={manageId}
           onClose={() => setManageId(null)}
+          onEdit={(i) => setInterestModal({ open: true, existing: i })}
         />
       )}
       <ImportModal open={importOpen} onClose={() => setImportOpen(false)} />

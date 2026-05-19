@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { ExternalLink, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { api } from "../api";
-import type { Filter, FilterKind } from "../types";
+import type { Filter, FilterKind, Interest } from "../types";
 import { youtubeChannelUrl } from "../lib/format";
 import { AddChannelModal } from "./AddChannelModal";
 
@@ -10,6 +10,7 @@ interface Props {
   open: boolean;
   interestId: number;
   onClose: () => void;
+  onEdit: (i: Interest) => void;
 }
 
 const FILTER_LABELS: Record<FilterKind, { label: string; needsPattern: boolean; placeholder: string }> = {
@@ -21,7 +22,7 @@ const FILTER_LABELS: Record<FilterKind, { label: string; needsPattern: boolean; 
   hide_shorts: { label: "Hide shorts (heuristic)", needsPattern: false, placeholder: "" },
 };
 
-export function ManageInterestPanel({ open, interestId, onClose }: Props) {
+export function ManageInterestPanel({ open, interestId, onClose, onEdit }: Props) {
   const qc = useQueryClient();
   const { data: detail } = useQuery({
     queryKey: ["interest", interestId],
@@ -56,8 +57,17 @@ export function ManageInterestPanel({ open, interestId, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-5 py-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
-            {detail?.icon} {detail?.name ?? "…"}
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <span>{detail?.icon} {detail?.name ?? "…"}</span>
+            {detail && (
+              <button
+                onClick={() => onEdit(detail)}
+                className="p-1 rounded text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                title="Rename / edit"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
           </h2>
           <button onClick={onClose} className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800">
             <X size={18} />

@@ -3,7 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, RefreshCw, Upload } from "lucide-react";
 
 import { api } from "./api";
-import type { Interest, Video, VideoStateView } from "./types";
+import type {
+  ContentFilter,
+  Interest,
+  SortMode,
+  TimeWindow,
+  Video,
+  VideoStateView,
+} from "./types";
 import { youtubeWatchUrl } from "./lib/format";
 
 import { Sidebar } from "./components/Sidebar";
@@ -25,6 +32,26 @@ const VIEW_TABS: { id: VideoStateView; label: string }[] = [
   { id: "all", label: "All" },
 ];
 
+const TIME_OPTIONS: { id: TimeWindow; label: string }[] = [
+  { id: "all", label: "Any time" },
+  { id: "today", label: "Today" },
+  { id: "week", label: "Week" },
+  { id: "month", label: "Month" },
+];
+
+const CONTENT_OPTIONS: { id: ContentFilter; label: string; title?: string }[] = [
+  { id: "all", label: "All" },
+  { id: "no_shorts", label: "No shorts" },
+  { id: "shorts_only", label: "Shorts" },
+  { id: "long", label: "Long", title: "≥ 20 min. Needs phase 2 (YOUTUBE_API_KEY); empty in phase 1." },
+];
+
+const SORT_OPTIONS: { id: SortMode; label: string }[] = [
+  { id: "newest", label: "Newest" },
+  { id: "oldest", label: "Oldest" },
+  { id: "most_viewed", label: "Most viewed" },
+];
+
 export default function App() {
   const qc = useQueryClient();
   const { data: interests = [] } = useQuery({
@@ -34,6 +61,9 @@ export default function App() {
 
   const [selectedId, setSelectedId] = useState<number | "all">("all");
   const [state, setState] = useState<VideoStateView>("unwatched");
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("all");
+  const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
   const { mode: viewMode, setMode: setViewMode, cycle: cycleViewMode } = useViewMode();
 
   const [interestModal, setInterestModal] = useState<{ open: boolean; existing: Interest | null }>({
@@ -165,10 +195,50 @@ export default function App() {
               </span>
             )}
           </div>
+
+          <div className="px-5 pb-2 flex flex-wrap items-center gap-1 text-xs">
+            <PillGroup
+              options={TIME_OPTIONS}
+              value={timeWindow}
+              onChange={setTimeWindow}
+            />
+            <span className="mx-2 text-zinc-300 dark:text-zinc-700" aria-hidden>
+              |
+            </span>
+            <PillGroup
+              options={CONTENT_OPTIONS}
+              value={contentFilter}
+              onChange={setContentFilter}
+            />
+            <span className="mx-2 text-zinc-300 dark:text-zinc-700" aria-hidden>
+              |
+            </span>
+            <label className="flex items-center gap-1 text-zinc-500">
+              <span>Sort:</span>
+              <select
+                value={sortMode}
+                onChange={(e) => setSortMode(e.target.value as SortMode)}
+                className="bg-transparent border border-zinc-300 dark:border-zinc-700 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto scrollbar-thin px-5 py-5">
-          <VideoGrid interestId={interestId} state={state} mode={viewMode} />
+          <VideoGrid
+            interestId={interestId}
+            state={state}
+            mode={viewMode}
+            timeWindow={timeWindow}
+            content={contentFilter}
+            sort={sortMode}
+          />
         </main>
       </div>
 
@@ -204,6 +274,33 @@ export default function App() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+interface PillGroupProps<T extends string> {
+  options: { id: T; label: string; title?: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}
+
+function PillGroup<T extends string>({ options, value, onChange }: PillGroupProps<T>) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          onClick={() => onChange(o.id)}
+          title={o.title}
+          className={`px-2 py-0.5 rounded ${
+            value === o.id
+              ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

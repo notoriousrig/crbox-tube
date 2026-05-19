@@ -1,7 +1,7 @@
 """Video listing (per-interest, filtered) and state marks."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -12,10 +12,18 @@ from app.auth import RequireUser
 from app.database import get_db
 from app.models import Channel, Interest, Video, VideoState, interest_channel
 from app.schemas import VideoOut, VideoStateUpdate
-from app.services.filter_engine import compile_filters, passes
+from app.services.filter_engine import compile_filters, looks_like_short, passes
 
 
 router = APIRouter(prefix="/api/videos", tags=["videos"], dependencies=[RequireUser])
+
+
+TIME_WINDOWS: dict[str, timedelta] = {
+    "today": timedelta(days=1),
+    "week": timedelta(days=7),
+    "month": timedelta(days=30),
+}
+LONG_VIDEO_THRESHOLD_SECONDS = 20 * 60  # 20 minutes
 
 
 def _serialize(v: Video, channel_title: str) -> dict:
@@ -40,6 +48,9 @@ def _serialize(v: Video, channel_title: str) -> dict:
 def list_videos(
     interest_id: int | None = Query(default=None),
     state: Literal["unwatched", "watched", "saved", "hidden", "all"] = "unwatched",
+    time_window: Literal["all", "today", "week", "month"] = "all",
+    content: Literal["all", "no_shorts", "shorts_only", "long"] = "all",
+    sort: Literal["newest", "oldest", "most_viewed"] = "newest",
     limit: int = Query(default=200, ge=1, le=1000),
     db: Session = Depends(get_db),
 ):
@@ -63,7 +74,24 @@ def list_videos(
             interest_channel, interest_channel.c.channel_id == Video.channel_id,
         ).where(interest_channel.c.interest_id == interest_id)
 
-    q = q.order_by(Video.published_at.desc()).limit(limit * 3)  # over-fetch for filtering
+    # Time-window WHERE
+    if time_window in TIME_WINDOWS:
+        cutoff = datetime.utcnow() - TIME_WINDOWS[time_window]
+        q = q.where(Video.published_at >= cutoff)
+
+    # `long` requires real duration data (phase 2). Phase-1 NULLs are excluded.
+    if content == "long":
+        q = q.where(Video.duration_seconds.is_not(None))
+        q = q.where(Video.duration_seconds >= LONG_VIDEO_THRESHOLD_SECONDS)
+
+    if sort == "oldest":
+        q = q.order_by(Video.published_at.asc())
+    elif sort == "most_viewed":
+        q = q.order_by(Video.view_count.desc().nullslast())
+    else:
+        q = q.order_by(Video.published_at.desc())
+
+    q = q.limit(limit * 3)  # over-fetch for post-filtering
 
     rows = db.execute(q).all()
     out: list[dict] = []
@@ -88,6 +116,12 @@ def list_videos(
         # state == "all" passes through
 
         if compiled and not passes(video, compiled):
+            continue
+
+        # Shorts content filter — heuristic for phase 1, exact in phase 2.
+        if content == "no_shorts" and looks_like_short(video):
+            continue
+        if content == "shorts_only" and not looks_like_short(video):
             continue
 
         out.append(_serialize(video, channel_title))

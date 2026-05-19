@@ -1,10 +1,13 @@
 import type {
   Channel,
+  ContentFilter,
   Filter,
   ImportResult,
   Interest,
   InterestDetail,
   RefreshResult,
+  SortMode,
+  TimeWindow,
   Video,
   VideoStateView,
 } from "./types";
@@ -82,11 +85,17 @@ export const api = {
   listVideos: (params: {
     interest_id?: number | null;
     state?: VideoStateView;
+    time_window?: TimeWindow;
+    content?: ContentFilter;
+    sort?: SortMode;
     limit?: number;
   }) => {
     const q = new URLSearchParams();
     if (params.interest_id != null) q.set("interest_id", String(params.interest_id));
     if (params.state) q.set("state", params.state);
+    if (params.time_window) q.set("time_window", params.time_window);
+    if (params.content) q.set("content", params.content);
+    if (params.sort) q.set("sort", params.sort);
     if (params.limit) q.set("limit", String(params.limit));
     return req<Video[]>(`/videos?${q.toString()}`);
   },

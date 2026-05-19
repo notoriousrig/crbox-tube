@@ -74,7 +74,7 @@ def compile_filters(filters: Iterable[Filter]) -> list[CompiledFilter]:
     return compiled
 
 
-def _looks_like_short(v: Video) -> bool:
+def looks_like_short(v: Video) -> bool:
     if v.duration_seconds is not None:
         return v.duration_seconds > 0 and v.duration_seconds <= 60
     if _SHORTS_RE.search(v.title or ""):
@@ -109,6 +109,6 @@ def passes(video: Video, compiled: list[CompiledFilter], *, now: datetime | None
             if (now - video.published_at) > timedelta(days=cf.max_age_days):
                 return False
         elif cf.kind == "hide_shorts":
-            if _looks_like_short(video):
+            if looks_like_short(video):
                 return False
     return True

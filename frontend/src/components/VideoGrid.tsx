@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
-import type { Video, VideoStateView } from "../types";
+import type { ContentFilter, SortMode, TimeWindow, Video, VideoStateView } from "../types";
 import type { ViewMode } from "../hooks/useViewMode";
 import { VideoCard } from "./VideoCard";
 
@@ -8,6 +8,9 @@ interface Props {
   interestId: number | null;
   state: VideoStateView;
   mode: ViewMode;
+  timeWindow: TimeWindow;
+  content: ContentFilter;
+  sort: SortMode;
 }
 
 const GRID_CLASS: Record<ViewMode, string> = {
@@ -17,11 +20,19 @@ const GRID_CLASS: Record<ViewMode, string> = {
   text: "flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800 max-w-3xl mx-auto",
 };
 
-export function VideoGrid({ interestId, state, mode }: Props) {
+export function VideoGrid({ interestId, state, mode, timeWindow, content, sort }: Props) {
   const qc = useQueryClient();
   const { data: videos = [], isLoading } = useQuery({
-    queryKey: ["videos", interestId, state],
-    queryFn: () => api.listVideos({ interest_id: interestId, state, limit: 200 }),
+    queryKey: ["videos", interestId, state, timeWindow, content, sort],
+    queryFn: () =>
+      api.listVideos({
+        interest_id: interestId,
+        state,
+        time_window: timeWindow,
+        content,
+        sort,
+        limit: 200,
+      }),
   });
 
   const invalidateAll = () => {

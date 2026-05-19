@@ -8,6 +8,10 @@ export type FilterKind =
 
 export type VideoStateView = "unwatched" | "watched" | "saved" | "hidden" | "all";
 
+export type TimeWindow = "all" | "today" | "week" | "month";
+export type ContentFilter = "all" | "no_shorts" | "shorts_only" | "long";
+export type SortMode = "newest" | "oldest" | "most_viewed";
+
 export interface Filter {
   id: number;
   interest_id: number;
